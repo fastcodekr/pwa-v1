@@ -1,0 +1,42 @@
+name: 'S3 배포'
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 코드 가져옴
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+         token: ${{ secrets.MY_TOKEN }}
+        
+      # Node.js 14.x 버전 사용
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v2.4.1
+        with:
+          node-version: '14.x'
+
+      # 모듈 설치
+      - name: Install Dependencies
+        run: yarn
+
+      # 빌드
+      - name: Build yarn
+        run: yarn build
+
+      # S3 업로드
+      - name: Deploy s3
+        uses: jakejarvis/s3-sync-action@master
+        with:
+          args: --acl public-read --follow-symlinks --delete
+        env:
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          SOURCE_DIR: "build"
+          DEST_DIR: '/'
